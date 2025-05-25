@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conduit-frontend-deployment
+  labels:
+    app: conduit-frontend-label
+  namespace: conduit-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: conduit-frontend-pod
+  template:
+    metadata:
+      labels:
+        app: conduit-frontend-pod
+    spec:
+      containers:
+        - name: conduit-frontend-con
+          image: pankajarya12345/conduit-app-frontend:latest
+          ports:
+            - containerPort: 80

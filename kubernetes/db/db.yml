@@ -1,0 +1,80 @@
+#============================ Persistent Volume ==========================================
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: conduit-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: "/mnt/data/postges"
+
+#=========================== Persistent Volume Claim =====================================      
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conduit-pvc
+  namespace: conduit-ns
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+
+#========================== StatefuleSet for db ==========================================       
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: conduit-statefulset
+  namespace: conduit-ns
+spec:
+  serviceName: "conduit-db-svc"
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: conduit-postgres
+  template:
+    metadata:
+      labels:
+        app: conduit-postgres
+    spec:
+      containers:
+        - name: postgres-con
+          image: postgres:13
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: username
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
+
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: database
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: conduit-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: conduit-data
+          persistentVolumeClaim:
+            claimName: conduit-pvc

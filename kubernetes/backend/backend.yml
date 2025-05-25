@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conduit-backend-deployment
+  labels:
+    app: conduit-backend-label
+  namespace: conduit-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: conduit-backend-pod
+  template:
+    metadata:
+      labels:
+        app: conduit-backend-pod
+    spec:
+      containers:
+        - name: conduit-backend-con
+          image: pankajarya12345/conduit-app-backend:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: DB_HOSTNAME
+              value: "conduit-db-svc.conduit-ns.svc.cluster.local"
+
+            - name: DEV_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: username
+
+            - name: DEV_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
+
+          
+
